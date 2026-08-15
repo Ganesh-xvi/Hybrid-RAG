@@ -1,0 +1,207 @@
+{
+  "info": {
+    "_postman_id": "hybrid-rag-docker-api",
+    "name": "Hybrid RAG \u2014 Docker API",
+    "description": "## Setup\n\n1. `docker compose up -d`\n2. The Collection Variables already contain the default `.env` API keys.\n3. Run: Health \u2192 Start Ingest \u2192 Ingest Status \u2192 Query\n\n## Auth\n\n- If you change keys in `.env`, update the Collection variables here in Postman to match.\n- Header name: `X-API-Key`",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Resolve base_url (environment overrides collection)",
+          "const baseUrl = pm.variables.get('base_url');",
+          "if (!baseUrl || baseUrl.includes('{{')) {",
+          "    console.warn('Set base_url to http://localhost:8000 in Environment or Collection variables');",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "ingest_api_key",
+      "value": "a7f3c9e2b1d84f6a9c0e8d7b5a4f3e2c",
+      "type": "string",
+      "description": "Must match INGEST_API_KEY in .env"
+    },
+    {
+      "key": "query_api_key",
+      "value": "9k2mP8xQ7vR1nL4wZ6tY3uI0oH5jK8",
+      "type": "string",
+      "description": "Must match QUERY_API_KEY in .env"
+    },
+    {
+      "key": "job_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET Auth Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/auth/status",
+            "description": "Check if server requires ingest/query API keys (does not reveal key values)."
+          }
+        },
+        {
+          "name": "GET Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/health",
+            "description": "No API key required."
+          }
+        },
+        {
+          "name": "GET OpenAPI Docs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/docs"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ingest",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const key = (pm.variables.get('ingest_api_key') || '').trim();",
+              "pm.request.headers.remove('X-API-Key');",
+              "if (key) {",
+              "    pm.request.headers.add({ key: 'X-API-Key', value: key });",
+              "} else {",
+              "    console.log('ingest_api_key empty \u2014 OK if INGEST_API_KEY is not set in .env');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "item": [
+        {
+          "name": "POST Start Ingest",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 401) {",
+                  "    pm.test('Hint: set ingest_api_key to match INGEST_API_KEY in .env', () => false);",
+                  "}",
+                  "if (pm.response.code === 202) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('job_id', json.job_id);",
+                  "    pm.environment.set('job_id', json.job_id);",
+                  "    pm.test('job_id saved', () => pm.expect(json.job_id).to.be.a('string'));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{ingest_api_key}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{base_url}}/ingest",
+            "description": "Requires `X-API-Key` when `INGEST_API_KEY` is set in `.env`.\n\nHeader uses `{{ingest_api_key}}` \u2014 must match `.env` exactly."
+          }
+        },
+        {
+          "name": "GET Ingest Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/ingest/status/{{job_id}}",
+            "description": "No API key required. Uses `{{job_id}}` from Start Ingest response."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Query",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const key = (pm.variables.get('query_api_key') || '').trim();",
+              "pm.request.headers.remove('X-API-Key');",
+              "if (key) {",
+              "    pm.request.headers.add({ key: 'X-API-Key', value: key });",
+              "} else {",
+              "    console.log('query_api_key empty \u2014 OK if QUERY_API_KEY is not set in .env');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "item": [
+        {
+          "name": "POST Query",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 401) {",
+                  "    pm.test('Hint: set query_api_key to match QUERY_API_KEY in .env', () => false);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{query_api_key}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"What is the notice period in Honeywell's employment agreement?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{base_url}}/query"
+          }
+        }
+      ]
+    }
+  ]
+}

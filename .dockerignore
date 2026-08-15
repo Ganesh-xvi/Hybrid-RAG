@@ -1,0 +1,60 @@
+# Git & IDE
+.git
+.gitignore
+.cursor
+.vscode
+.idea
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.egg-info
+.eggs
+dist
+build
+wheels
+.mypy_cache
+.ruff_cache
+.pytest_cache
+htmlcov
+.coverage
+coverage.xml
+
+# Virtual environments (never bake into image)
+.venv
+venv
+env
+
+# Local secrets & env (inject at runtime via env_file / secrets)
+.env
+.env.*
+!.env.example
+
+# Logs & runtime data (mount as volumes instead)
+logs
+storage
+*.log
+
+# User PDFs (mount ./data volume)
+data/*.pdf
+
+# Docs / planning (not needed in runtime image)
+PLAN.MD
+evaluation_results.md
+README.md
+
+# Docker meta
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# uv local cache (lock + export are copied; cache is not)
+.uv
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Scripts not required at runtime
+scripts

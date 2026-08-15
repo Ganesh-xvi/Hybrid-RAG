@@ -1,0 +1,24 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# uv
+.uv/
+
+# Local storage & logs
+storage/
+logs/
+*.log
+
+# Environment
+.env
+
+# Data PDFs (user-provided)
+data/*.pdf
